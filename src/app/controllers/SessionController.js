@@ -3,7 +3,6 @@ import jwt from 'jsonwebtoken';
 
 import authConfig from '../../config/auth';
 import User from '../models/User';
-import { next } from 'sucrase/dist/parser/tokenizer';
 
 class SessionController {
     async store(req, res) {
@@ -19,34 +18,32 @@ class SessionController {
         }
 
         const { email, password } = req.body;
-        try {
-            const user = User.findOne({ where: { email: email } });
 
-            if (!user) {
-                return res.status(401).json({
-                    error: 'User does not exists',
-                });
-            }
-            if (!(await user.checkPassword(password))) {
-                return res.status(401).json({
-                    error: 'Password does not match',
-                });
-            }
+        const user = await User.findOne({ where: { email: email } });
 
-            const { id, name } = user;
-            return res.json({
-                user: {
-                    id,
-                    name,
-                    email,
-                },
-                token: jwt.sign({ id }, authConfig.secret, {
-                    expiresIn: authConfig.expiration,
-                }),
+        if (!user) {
+            return res.status(401).json({
+                error: 'User does not exists',
             });
-        } catch (err) {
-            console.log(err);
         }
+        if (!(await user.checkPassword(password))) {
+            return res.status(401).json({
+                error: 'Password does not match',
+            });
+        }
+
+        const { id, name } = user;
+
+        return res.json({
+            user: {
+                id,
+                name,
+                email,
+            },
+            token: jwt.sign({ id }, authConfig.secret, {
+                expiresIn: authConfig.expiration,
+            }),
+        });
     }
 }
 
