@@ -66,10 +66,10 @@ class RecipientController {
             });
         }
 
-        const teste = await existRecipient.update(req.body);
+        const updatedRecipient = await existRecipient.update(req.body);
 
         return res.status(200).json({
-            teste,
+            updatedRecipient,
         });
     }
 

@@ -9,7 +9,6 @@ class User extends Model {
                 name: Sequelize.STRING,
                 password: Sequelize.VIRTUAL,
                 password_hash: Sequelize.STRING,
-                //  provider: Sequelize.BOOLEAN, Vou precisar informar que é admin?
             },
             {
                 sequelize,
