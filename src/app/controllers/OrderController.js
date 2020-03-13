@@ -1,5 +1,6 @@
 import * as Yup from 'yup';
 
+import NewOrderMail from '../jobs/NewOrder';
 import Order from '../models/Order';
 import Deliveryman from '../models/Deliveryman';
 import Recipient from '../models/Recipient';
@@ -34,8 +35,13 @@ class OrderController {
                 .json({ Error: 'Deliveryman does not exists' });
         }
 
+        // const data = { existRecipient, existDeliveryman };
+
+        console.log('REQ.BODY', req.body);
+        //   await NewOrderMail.handle({ data });
+
         const teste = await Order.create(req.body);
-        return res.status(200).json(teste);
+        return res.status(200).json();
     }
 }
 

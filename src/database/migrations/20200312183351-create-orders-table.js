@@ -10,30 +10,6 @@ module.exports = {
                 primaryKey: true,
             },
 
-            recipient_id: {
-                type: Sequelize.INTEGER,
-                references: { model: 'recipients', key: 'id' },
-                onUpdate: 'CASCADE',
-                onDelete: 'SET NULL',
-                allowNull: false,
-            },
-
-            deliveryman_id: {
-                type: Sequelize.INTEGER,
-                references: { model: 'deliverymans', key: 'id' },
-                onUpdate: 'CASCADE',
-                onDelete: 'SET NULL',
-                allowNull: false,
-            },
-
-            signature_id: {
-                type: Sequelize.INTEGER,
-                references: { model: 'signatures', key: 'id' },
-                onUpdate: 'CASCADE',
-                onDelete: 'SET NULL',
-                allowNull: true,
-            },
-
             product: {
                 type: Sequelize.STRING,
                 allowNull: false,

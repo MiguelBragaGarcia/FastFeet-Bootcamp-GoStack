@@ -18,7 +18,7 @@ class Order extends Model {
     }
 
     associate(models) {
-        this.belongsTo(models.File, {
+        this.belongsTo(models.Signature, {
             foreignKey: 'signature_id',
             as: 'signature',
         });
