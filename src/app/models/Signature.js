@@ -9,7 +9,7 @@ class Signature extends Model {
                 url: {
                     type: Sequelize.VIRTUAL,
                     get() {
-                        return `http://localhost:3330/upload/${this.path}`;
+                        return `http://localhost:3330/upload/signature/${this.path}`;
                     },
                 },
             },

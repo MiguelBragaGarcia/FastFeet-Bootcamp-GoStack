@@ -8,6 +8,10 @@ import RecipientController from './app/controllers/RecipientController';
 import DeliverymanController from './app/controllers/DeliverymanController';
 import FileController from './app/controllers/FileController';
 import OrderController from './app/controllers/OrderController';
+import DeliverymanCounterController from './app/controllers/DeliverymanCounterController';
+import CouriersController from './app/controllers/CouriersController';
+import SignatureController from './app/controllers/SignatureController';
+import DeliveryProblemController from './app/controllers/DeliveryProblemController';
 
 import authMiddleware from './app/middlewares/auth';
 
@@ -21,6 +25,23 @@ routes.get('/', (req, res) => {
 
 routes.post('/sessions', SessionController.store);
 routes.post('/recipients/find', RecipientController.index);
+//Rotas de problemas
+routes.post('/delivery/:id/problem', DeliveryProblemController.store);
+routes.get('/delivery/:id/problem', DeliveryProblemController.index);
+routes.delete('/delivery/:id/problem', DeliveryProblemController.update);
+
+//ROTAS DE ENTREGADORES
+routes.get('/deliveryman/:id/deliveries', CouriersController.index);
+routes.put(
+    '/deliveryman/getdeliveries/:order_id',
+    DeliverymanCounterController.update,
+    CouriersController.update
+);
+routes.post(
+    '/delivery/:order_id',
+    upload.single('file'),
+    SignatureController.store
+);
 
 routes.use(authMiddleware);
 
@@ -35,6 +56,13 @@ routes.put('/update/:id', DeliverymanController.update);
 routes.get('/listar', DeliverymanController.index);
 
 //Rotas de gestão das encomendas
-routes.post('/order/register', OrderController.store);
+routes.post('/order', OrderController.store);
+routes.get('/order', OrderController.index);
+routes.delete('/order/:id', OrderController.delete);
+routes.put('/order/:order_id', OrderController.update);
+
+//Rota de remoção forçada
+
+routes.put('/delivery/:id/cancel-delivery', DeliveryProblemController.update);
 
 export default routes;

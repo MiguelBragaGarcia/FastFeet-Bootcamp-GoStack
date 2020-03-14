@@ -6,19 +6,15 @@ class NewOrderMail {
     }
 
     async handle({ data }) {
-        const {
-            existRecipient: recipient,
-            existDeliveryman: deliveryman,
-        } = data;
+        const { order } = data;
         console.log('A fila executou');
         await Mail.sendMail({
-            to: `${deliveryman.nome}<${deliveryman.email}`,
+            to: `${order.deliveryman_id.name}<${order.deliveryman_id.email}`,
             subject: 'Nova encomenda disponível',
             template: 'newOrder',
             context: {
-                deliveryman_name: deliveryman.nome,
-                client_name: recipient.nome,
-                client_address: `Cidade: ${recipient.cidade} Rua: ${recipient.rua} número: ${recipient.numero} `,
+                deliveryman_name: order.deliveryman_id.nome,
+                client_product: order.product,
             },
         });
     }

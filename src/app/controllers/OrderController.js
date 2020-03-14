@@ -1,9 +1,15 @@
 import * as Yup from 'yup';
+import { setHours, startOfDay, isBefore, isAfter } from 'date-fns';
 
-import NewOrderMail from '../jobs/NewOrder';
 import Order from '../models/Order';
 import Deliveryman from '../models/Deliveryman';
 import Recipient from '../models/Recipient';
+import File from '../models/File';
+import Signature from '../models/Signature';
+
+import Queue from '../../lib/Queue';
+import NewOrderMail from '../jobs/NewOrderMail';
+import CancellationMail from '../jobs/CancellationMail';
 
 class OrderController {
     async store(req, res) {
@@ -21,13 +27,11 @@ class OrderController {
 
         const { recipient_id, deliveryman_id } = req.body;
 
-        //Verifica se o destinatário existe
         const existRecipient = await Recipient.findByPk(recipient_id);
         if (!existRecipient) {
             return res.status(400).json({ Error: 'Recipient does not exists' });
         }
 
-        //Verifica se o entregador existe
         const existDeliveryman = await Deliveryman.findByPk(deliveryman_id);
         if (!existDeliveryman) {
             return res
@@ -35,13 +39,108 @@ class OrderController {
                 .json({ Error: 'Deliveryman does not exists' });
         }
 
-        // const data = { existRecipient, existDeliveryman };
+        const order = await Order.create(req.body);
 
-        console.log('REQ.BODY', req.body);
-        //   await NewOrderMail.handle({ data });
+        const { nome, email } = existDeliveryman;
+        order.deliveryman_id = {
+            nome,
+            email,
+        };
 
-        const teste = await Order.create(req.body);
-        return res.status(200).json();
+        await Queue.add(NewOrderMail.key, { order });
+
+        return res.status(200).json({ order });
+    }
+
+    async index(req, res) {
+        const allOrders = await Order.findAll({
+            where: { canceled_at: null },
+            attributes: [
+                'id',
+                'product',
+                'start_date',
+                'end_date',
+                'recipient_id',
+                'deliveryman_id',
+                'signature_id',
+            ],
+            include: [
+                {
+                    model: Deliveryman,
+                    as: 'deliveryman',
+                    attributes: ['id', 'nome', 'email', 'avatar_id'],
+                    include: [
+                        {
+                            model: File,
+                            as: 'avatar',
+                            attributes: ['name', 'path', 'url'],
+                        },
+                    ],
+                },
+            ],
+        });
+
+        return res.status(200).json(allOrders);
+    }
+
+    async delete(req, res) {
+        const { id } = req.params;
+        const delivery = await Order.findByPk(id, {
+            where: { start_date: null },
+        });
+
+        if (!delivery) {
+            return res.status(400).json({
+                error: 'Order does not exist',
+            });
+        } else if (delivery.start_date !== null) {
+            return res.status(400).json({
+                Error:
+                    'you are trying to remove an order that is being delivered',
+            });
+        } else if (delivery.canceled_at !== null) {
+            return res.status(400).json({
+                Error:
+                    'you are trying to remove an order that has already been removed',
+            });
+        }
+
+        await delivery.update({ canceled_at: new Date() });
+        return res.json(delivery);
+    }
+
+    async update(req, res) {
+        const schemma = Yup.object().shape({
+            product: Yup.string(),
+            recipient_id: Yup.number(),
+            deliveryman_id: Yup.number(),
+        });
+
+        if (!(await schemma.isValid(req.body))) {
+            return res.status(400).json({ Error: 'Validation fails' });
+        }
+        const { order_id } = req.params;
+        const order = await Order.findByPk(order_id);
+
+        if (!order) {
+            return res.status(400).json({ Error: 'Order not found' });
+        }
+
+        if (!order.start_date) {
+            const date = new Date();
+            const start_date = setHours(startOfDay(date), 8);
+            const end_date = setHours(startOfDay(date), 18);
+
+            if (!(isBefore(start_date, date) && isAfter(end_date, date))) {
+                return res.status(400).json({
+                    ERROR:
+                        'it is not possible to pick up the order outside opening hours 08:00 AM - 18:00 PM',
+                });
+            }
+            await order.update({ start_date: date });
+
+            return res.json(order);
+        }
     }
 }
 
