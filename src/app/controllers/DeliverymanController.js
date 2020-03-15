@@ -31,7 +31,6 @@ class DeliverymanController {
         return res.status(200).json({ id, nome, email, avatar_id });
     }
 
-    //PERGUNTAR O MOTIVO DE NÃO CONSEGUIR ACESSAR A IMAGEM (ESTÁ INDO DIRETO PARA O MIDDLEWARE DE AUTENTIFICAÇÃO POR ALGUM MOTIVO)
     async index(req, res) {
         const allDeliveryman = await Deliveryman.findAll({
             attributes: ['id', 'nome', 'email', 'avatar_id'],
@@ -77,7 +76,7 @@ class DeliverymanController {
                 .status(400)
                 .json({ Error: 'Deliveryman does not exists' });
         }
-        //Para deletar é igual o update tem que passar o que se quer deletar/atualizar
+
         await deliveryman.destroy();
 
         return res.status(200).json({

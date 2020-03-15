@@ -31,8 +31,6 @@ class RecipientController {
             });
         }
 
-        //Como não tem como adicionar adms pela aplicação todas as pessoas que estão na tabela por padrão sao ADM
-
         const recipient = await Recipient.create(req.body);
         return res.status(200).json({ recipient });
     }
@@ -73,7 +71,6 @@ class RecipientController {
         });
     }
 
-    //Busca as encomnedas pelo nome do destinatário realmente precisa disso?
     async index(req, res) {
         const schema = Yup.object().shape({
             nome: Yup.string().required(),
