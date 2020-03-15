@@ -61,7 +61,6 @@ class OrderController {
                 'start_date',
                 'end_date',
                 'recipient_id',
-                'deliveryman_id',
                 'signature_id',
             ],
             include: [
@@ -77,6 +76,12 @@ class OrderController {
                         },
                     ],
                 },
+
+                {
+                    model: Signature,
+                    as: 'signature',
+                    attributes: ['name', 'path', 'url'],
+                },
             ],
         });
 
@@ -85,28 +90,37 @@ class OrderController {
 
     async delete(req, res) {
         const { id } = req.params;
-        const delivery = await Order.findByPk(id, {
+        const cancelOrder = await Order.findByPk(id, {
             where: { start_date: null },
+            include: [
+                {
+                    model: Deliveryman,
+                    as: 'deliveryman',
+                    attributes: ['id', 'nome', 'email'],
+                },
+            ],
         });
 
-        if (!delivery) {
+        if (!cancelOrder) {
             return res.status(400).json({
                 error: 'Order does not exist',
             });
-        } else if (delivery.start_date !== null) {
+        } else if (cancelOrder.start_date !== null) {
             return res.status(400).json({
                 Error:
                     'you are trying to remove an order that is being delivered',
             });
-        } else if (delivery.canceled_at !== null) {
+        } else if (cancelOrder.canceled_at !== null) {
             return res.status(400).json({
                 Error:
-                    'you are trying to remove an order that has already been removed',
+                    'You cannot cancel a product that has already been canceled',
             });
         }
 
-        await delivery.update({ canceled_at: new Date() });
-        return res.json(delivery);
+        await cancelOrder.update({ canceled_at: new Date() });
+        await Queue.add(CancellationMail.key, { cancelOrder });
+
+        return res.json(cancelOrder);
     }
 
     async update(req, res) {

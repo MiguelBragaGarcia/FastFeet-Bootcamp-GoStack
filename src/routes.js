@@ -19,16 +19,11 @@ const routes = new Router();
 
 const upload = multer(multerConfig);
 
-routes.get('/', (req, res) => {
-    return res.json({ OK: true });
-});
-
 routes.post('/sessions', SessionController.store);
 routes.post('/recipients/find', RecipientController.index);
 //Rotas de problemas
 routes.post('/delivery/:id/problem', DeliveryProblemController.store);
 routes.get('/delivery/:id/problem', DeliveryProblemController.index);
-routes.delete('/delivery/:id/problem', DeliveryProblemController.update);
 
 //ROTAS DE ENTREGADORES
 routes.get('/deliveryman/:id/deliveries', CouriersController.index);
@@ -37,6 +32,7 @@ routes.put(
     DeliverymanCounterController.update,
     CouriersController.update
 );
+
 routes.post(
     '/delivery/:order_id',
     upload.single('file'),
@@ -49,7 +45,7 @@ routes.post('/recipients', RecipientController.store);
 routes.put('/recipients/update', RecipientController.update);
 
 //Rotas de Gestão dos entregadores
-routes.post('/upload', upload.single('file'), FileController.store);
+routes.put('/upload/:id', upload.single('file'), FileController.store);
 routes.post('/register', DeliverymanController.store);
 routes.delete('/delete/:id', DeliverymanController.delete);
 routes.put('/update/:id', DeliverymanController.update);
@@ -63,6 +59,9 @@ routes.put('/order/:order_id', OrderController.update);
 
 //Rota de remoção forçada
 
-routes.put('/delivery/:id/cancel-delivery', DeliveryProblemController.update);
+routes.delete(
+    '/delivery/:id/cancel-delivery',
+    DeliveryProblemController.update
+);
 
 export default routes;

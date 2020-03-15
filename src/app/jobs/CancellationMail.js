@@ -6,15 +6,15 @@ class CancellationMail {
     }
 
     async handle({ data }) {
-        const { order } = data;
+        const { cancelOrder } = data;
         console.log('A fila executou');
         await Mail.sendMail({
-            to: `${order.deliveryman_id.name}<${order.deliveryman_id.email}`,
-            subject: 'Nova encomenda disponível',
+            to: `${cancelOrder.deliveryman.name}<${cancelOrder.deliveryman.email}`,
+            subject: 'Uma encomenda foi cancelada',
             template: 'cancellation',
             context: {
-                deliveryman_name: order.deliveryman_id.nome,
-                client_product: order.product,
+                deliveryman_name: cancelOrder.deliveryman.nome,
+                client_product: cancelOrder.product,
             },
         });
     }

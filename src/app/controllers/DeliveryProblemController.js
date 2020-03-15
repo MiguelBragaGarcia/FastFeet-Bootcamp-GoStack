@@ -1,6 +1,11 @@
 import * as Yup from 'yup';
-import DeliveryProblem from '../models/DeliveryProblem';
+
 import Order from '../models/Order';
+import Deliveryman from '../models/Deliveryman';
+
+import DeliveryProblem from '../models/DeliveryProblem';
+import CancellationMail from '../jobs/CancellationMail';
+import Queue from '../../lib/Queue';
 
 class DeliveryProblemController {
     async store(req, res) {
@@ -13,7 +18,10 @@ class DeliveryProblemController {
         }
 
         const delivery_id = req.params.id;
-        const problem = await DeliveryProblem.create(delivery_id, req.body);
+        const problem = await DeliveryProblem.create({
+            delivery_id,
+            description: req.body.description,
+        });
         return res.json(problem);
     }
 
@@ -26,14 +34,38 @@ class DeliveryProblemController {
     }
 
     async update(req, res) {
-        const problemResolve = await Order.findByPk(req.params.id);
+        const cancelOrder = await Order.findByPk(req.params.id, {
+            attributes: [
+                'id',
+                'product',
+                'canceled_at',
+                'start_date',
+                'deliveryman_id',
+                'recipient_id',
+            ],
+            include: [
+                {
+                    model: Deliveryman,
+                    as: 'deliveryman',
+                    attributes: ['id', 'nome', 'email'],
+                },
+            ],
+        });
 
-        if (!problemResolve) {
+        if (!cancelOrder) {
             return res.status(400).json({ error: 'Order does not exists' });
         }
-        await problemResolve.update({ canceled_at: new Date() });
 
-        return res.json(problemResolve);
+        if (cancelOrder.canceled_at !== null) {
+            return res.status(400).json({
+                error:
+                    'You cannot cancel a product that has already been canceled',
+            });
+        }
+        await cancelOrder.update({ canceled_at: new Date() });
+        await Queue.add(CancellationMail.key, { cancelOrder });
+
+        return res.json(cancelOrder);
     }
 }
 export default new DeliveryProblemController();

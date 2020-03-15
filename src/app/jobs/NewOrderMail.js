@@ -9,11 +9,11 @@ class NewOrderMail {
         const { order } = data;
         console.log('A fila executou');
         await Mail.sendMail({
-            to: `${order.deliveryman_id.name}<${order.deliveryman_id.email}`,
+            to: `${order.deliveryman.nome}<${order.deliveryman.email}`,
             subject: 'Nova encomenda disponível',
             template: 'newOrder',
             context: {
-                deliveryman_name: order.deliveryman_id.nome,
+                deliveryman_name: order.deliveryman.nome,
                 client_product: order.product,
             },
         });

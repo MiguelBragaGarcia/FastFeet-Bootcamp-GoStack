@@ -23,7 +23,6 @@ const models = [
 class Database {
     constructor() {
         this.init();
-        this.mongo();
     }
     init() {
         this.connection = new Sequelize(databaseConfig);
@@ -33,17 +32,6 @@ class Database {
                 model =>
                     model.associate && model.associate(this.connection.models)
             );
-    }
-
-    mongo() {
-        this.mongoConnection = mongoose.connect(
-            'mongodb://localhost:27017/desafiofinal',
-            {
-                useNewUrlParser: true,
-                useFindAndModify: true,
-                useUnifiedTopology: true,
-            }
-        );
     }
 }
 
