@@ -14,8 +14,8 @@ import CancellationMail from '../jobs/CancellationMail';
 class OrderController {
     async store(req, res) {
         const schema = Yup.object().shape({
-            recipient_id: Yup.number().required(),
-            deliveryman_id: Yup.number().required(),
+            recipient_name: Yup.string().required(),
+            deliveryman_name: Yup.string().required(),
             product: Yup.string().required(),
         });
 
@@ -25,21 +25,34 @@ class OrderController {
             });
         }
 
-        const { recipient_id, deliveryman_id } = req.body;
+        const { recipient_name, deliveryman_name } = req.body;
 
-        const existRecipient = await Recipient.findByPk(recipient_id);
+        const existRecipient = await Recipient.findOne({
+            where: {
+                nome: recipient_name,
+            },
+        });
         if (!existRecipient) {
             return res.status(400).json({ Error: 'Recipient does not exists' });
         }
 
-        const existDeliveryman = await Deliveryman.findByPk(deliveryman_id);
+        const existDeliveryman = await Deliveryman.findOne({
+            where: {
+                nome: deliveryman_name,
+            },
+        });
+
         if (!existDeliveryman) {
             return res
                 .status(400)
                 .json({ Error: 'Deliveryman does not exists' });
         }
 
-        const order = await Order.create(req.body);
+        const order = await Order.create({
+            product: req.body.product,
+            recipient_id: existRecipient.id,
+            deliveryman_id: existDeliveryman.id,
+        });
 
         const { nome, email } = existDeliveryman;
         order.deliveryman_id = {
@@ -126,8 +139,8 @@ class OrderController {
     async update(req, res) {
         const schemma = Yup.object().shape({
             product: Yup.string(),
-            recipient_id: Yup.number(),
-            deliveryman_id: Yup.number(),
+            recipient_name: Yup.string(),
+            deliveryman_name: Yup.string(),
         });
 
         if (!(await schemma.isValid(req.body))) {
@@ -140,6 +153,47 @@ class OrderController {
             return res.status(400).json({ Error: 'Order not found' });
         }
 
+        const { product, recipient_name, deliveryman_name } = req.body;
+
+        if (
+            product &&
+            recipient_name &&
+            deliveryman_name &&
+            order.canceled_at === null
+        ) {
+            const recipient = await Recipient.findOne({
+                where: {
+                    nome: recipient_name,
+                },
+            });
+
+            if (!recipient) {
+                return res
+                    .status(401)
+                    .json({ error: 'Recipient does not exists' });
+            }
+
+            const deliveryman = await Deliveryman.findOne({
+                where: {
+                    nome: deliveryman_name,
+                },
+            });
+
+            if (!deliveryman) {
+                return res
+                    .status(401)
+                    .json({ error: 'Recipient does not exists' });
+            }
+
+            await order.update({
+                recipient_id: recipient.id,
+                deliveryman_id: deliveryman.id,
+                product,
+            });
+
+            return res.json(order);
+        }
+
         if (!order.start_date) {
             const date = new Date();
             const start_date = setHours(startOfDay(date), 8);
@@ -148,7 +202,7 @@ class OrderController {
             if (!(isBefore(start_date, date) && isAfter(end_date, date))) {
                 return res.status(400).json({
                     ERROR:
-                        'it is not possible to pick up the order outside opening hours 08:00 AM - 18:00 PM',
+                        'It is not possible to pick up the order outside opening hours 08:00 AM - 18:00 PM',
                 });
             }
             await order.update({ start_date: date });

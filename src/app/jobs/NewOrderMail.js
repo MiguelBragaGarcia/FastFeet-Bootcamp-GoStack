@@ -15,6 +15,7 @@ class NewOrderMail {
             context: {
                 deliveryman_name: order.deliveryman.nome,
                 client_product: order.product,
+                order_id: order.id,
             },
         });
     }
